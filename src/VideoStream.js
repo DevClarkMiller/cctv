@@ -15,11 +15,10 @@ const VideoStream = ({ url }) => {
                     url: url
                 });
                 flvPlayer.attachMediaElement(videoRef.current);
+
                 flvPlayer.load();
                 flvPlayer.play();
-    
-                
-    
+
                 return () => {
                     flvPlayer.destroy();
                 };

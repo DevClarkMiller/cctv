@@ -40,7 +40,7 @@ const CameraGroup = ({nmsUrl}) =>{
             {
                 currentStreams && currentStreams.map((item) =>{
                     return(
-                        <VideoStreamWrapper nmsUrl={nmsUrl} name={item}/>
+                        <VideoStreamWrapper key={currentStreams.indexOf(item)} nmsUrl={nmsUrl} name={item}/>
                     )
                 })
             }
