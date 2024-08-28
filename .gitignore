@@ -1,6 +1,11 @@
-config.ini
 image.png
+
+# Config
 cams.json
+config.ini
+
+# Logs
+*.log
 
 # Dependencies
 node_modules/
