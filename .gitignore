@@ -1,0 +1,12 @@
+config.ini
+image.png
+
+# Dependencies
+node_modules/
+__pycache__/
+
+# venv
+Include/
+Lib/
+Scripts/
+pyvenv.cfg
