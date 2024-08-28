@@ -1,0 +1,101 @@
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 975-976-506
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 975-976-506
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 975-976-506
+INFO:root:New camera added - 127.0.0.1: 1724867741.844911
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 975-976-506
+INFO:root:New camera added - 127.0.0.1: 1724867764.959333
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 975-976-506
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 975-976-506
+INFO:root:New camera added - 127.0.0.1: 1724868801.276617
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 116-694-194
+ERROR:engineio.server:message handler error
+Traceback (most recent call last):
+  File "C:\projects\cctv\host\Lib\site-packages\flask_socketio\__init__.py", line 823, in _handle_event
+    ret = handler(auth)
+          ^^^^^^^^^^^^^
+TypeError: test_connect() takes 0 positional arguments but 1 was given
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\projects\cctv\host\Lib\site-packages\socketio\server.py", line 537, in _handle_connect
+    success = self._trigger_event(
+              ^^^^^^^^^^^^^^^^^^^^
+  File "C:\projects\cctv\host\Lib\site-packages\socketio\server.py", line 614, in _trigger_event
+    return handler(*args)
+           ^^^^^^^^^^^^^^
+  File "C:\projects\cctv\host\Lib\site-packages\flask_socketio\__init__.py", line 282, in _handler
+    return self._handle_event(handler, message, namespace, sid,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\projects\cctv\host\Lib\site-packages\flask_socketio\__init__.py", line 825, in _handle_event
+    ret = handler()
+          ^^^^^^^^^
+  File "C:\projects\cctv\host\camera-host.py", line 43, in test_connect
+    if cam_ip not in cams:
+       ^^^^^^^^^^^^^^^^^^
+TypeError: argument of type 'NoneType' is not iterable
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\projects\cctv\host\Lib\site-packages\flask_socketio\__init__.py", line 823, in _handle_event
+    ret = handler(auth)
+          ^^^^^^^^^^^^^
+TypeError: test_connect() takes 0 positional arguments but 1 was given
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\projects\cctv\host\Lib\site-packages\engineio\server.py", line 434, in run_handler
+    return self.handlers[event](*args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\projects\cctv\host\Lib\site-packages\socketio\server.py", line 643, in _handle_eio_message
+    self._handle_connect(eio_sid, pkt.namespace, pkt.data)
+  File "C:\projects\cctv\host\Lib\site-packages\socketio\server.py", line 540, in _handle_connect
+    success = self._trigger_event(
+              ^^^^^^^^^^^^^^^^^^^^
+  File "C:\projects\cctv\host\Lib\site-packages\socketio\server.py", line 614, in _trigger_event
+    return handler(*args)
+           ^^^^^^^^^^^^^^
+  File "C:\projects\cctv\host\Lib\site-packages\flask_socketio\__init__.py", line 282, in _handler
+    return self._handle_event(handler, message, namespace, sid,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\projects\cctv\host\Lib\site-packages\flask_socketio\__init__.py", line 825, in _handle_event
+    ret = handler()
+          ^^^^^^^^^
+  File "C:\projects\cctv\host\camera-host.py", line 43, in test_connect
+    if cam_ip not in cams:
+       ^^^^^^^^^^^^^^^^^^
+TypeError: argument of type 'NoneType' is not iterable
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 116-694-194
+INFO:werkzeug: * Detected change in 'C:\\projects\\cctv\\host\\camera-host.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 116-694-194
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 116-694-194
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 116-694-194
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 116-694-194
+INFO:root:New camera added - 10.0.0.39: 1724869345.1667228
