@@ -9,6 +9,7 @@ connected_cams = set()
 mapped_ips_to_dir = {}
 cams = {}
 cam_dirs = {}
+cam_frames_recieved = {}
 
 todays_dir = time.time()
 

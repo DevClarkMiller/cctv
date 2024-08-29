@@ -13,7 +13,7 @@ def create_config():
 
     # Add sections with a key-value pair
     config["Logging"] = {"logging": True, "log_location": "client.log"}
-    config["Camera"] = {"show_window": False}
+    config["Camera"] = {"show_window": False, "width": 640, "height": 480}
     config["Server"] = {"host": 'http://localhost:5410'}
 
     with open(CONFIG_NAME, 'w') as configfile:
@@ -26,12 +26,16 @@ def read_config():
     # Read in the config file
     config.read(CONFIG_NAME)
 
+    cam_width = config.getint('Camera', 'width')
+    cam_height = config.getint('Camera', 'height')
+
     # Access values from the config file / Return a dictionary with the values
     return {
         'logging': config.getboolean('Logging', 'logging'),
         'log_location': config.get('Logging', 'log_location'),
         'host': config.get('Server', 'host'),
-        'show_window': config.getboolean('Camera', 'show_window')
+        'show_window': config.getboolean('Camera', 'show_window'),
+        'resolution': (cam_width, cam_height)   # Pack a tuple with the resolution of the camera
     }
 
 def config_exists():

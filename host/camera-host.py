@@ -1,24 +1,70 @@
-import base64, logging, time, globals
-from flask import Flask, request, json
+import base64, logging, time, globals, json
+from flask import Flask, request
 from flask_socketio import SocketIO, emit
 from config import *
 from camMods import *
 
 PORT = 5410
+cam_video = {}  # Dictionary of the base64 frame from each active camera
+connected_viewers = {}  # Contains the ips of the cameras the viewer wants to see
 
 logger = logging.getLogger(__name__)
 app = Flask(__name__)
-socketio = SocketIO(app, async_mode="eventlet")
+socketio = SocketIO(app, async_mode="eventlet", cors_allowed_origins="*")
 socketio.init_app(app)
+
+# Converts the set to a list, then to json and returns 
+def json_cams_list():
+    return list(globals.connected_cams)
 
 @app.route('/runningStreams')
 def runningStreams():   # Returns a json with a list of streams that are available to the viewer
-    return json.jsonify(list(globals.connected_cams))   # Converts the set to a list, then to json and returns it
+    return json_cams_list()
 
 @socketio.on('connect')
 def test_connect():
     # Creates a directory for the day if it doesn't already exist
     globals.create_daily_dir()
+
+# TODO - TAKE IN USER ACCOUNT AND ONLY RETURN WHATEVER CAMERAS THEY HAVE ACCESS TO
+@socketio.on('connect-viewer')
+def connect_viewer(user):
+    if user is None:
+        return emit('available-cameras', [])
+    
+    print(f'User joined as: {user}')
+
+    connected_viewers[user] = []   # Inits the viewer with an empty array of ips
+    emit('available-cameras', json_cams_list())
+
+@socketio.on('select-streams')
+def user_select_streams(req):
+    user = req.get("user")
+    selected_streams = req.get("selected-streams")
+
+    if user is None or selected_streams is None:
+        emit('streams-set', 'No account provided or streams selected')
+
+    if selected_streams is not None:
+        connected_viewers[user] = selected_streams
+
+    emit('streams-set', 'Streams now being sent to you!')
+
+@socketio.on('fetch-streams')
+def fetch_streams(user):
+    selected_streams = connected_viewers.get(user)
+
+    if selected_streams is None:
+        emit("streams-feed", {})    # Return empty dict since no streams are selected
+
+    stream_data = {}
+
+    for ip in selected_streams:
+        cam_feed = cam_video[ip]
+        if cam_feed != None:
+            stream_data[ip] = cam_feed
+
+    emit("streams-feed", stream_data)
 
 # When a camera connects
 @socketio.on('connect-cam')
@@ -30,6 +76,11 @@ def connect_cam(msg):
     # update the save file and do some other things :)
     if cam_ip not in globals.cams.keys(): init_new_cam(cam_ip)
     else: print(f"Camera connected: {cam_ip}")
+
+    if cam_ip not in globals.cam_frames_recieved.keys():
+        globals.cam_frames_recieved[cam_ip] = 0
+
+    print(f"{cam_ip} - frame count: {globals.cam_frames_recieved.get(cam_ip)}")
 
     # Create a directory in the daily log if the cam doesn't already exist
     cam_name = globals.cams.get(cam_ip)
@@ -43,10 +94,20 @@ def connect_cam(msg):
 @socketio.on('disconnect')
 def test_disconnect():
     ip = request.remote_addr
+
+    # Removes the ip from connected cams if that's where it's coming from
     if ip in globals.connected_cams:
         globals.connected_cams.remove(ip)
-
+        cam_video.pop(ip)
         print(f"Camera disconnected: {ip}")
+        
+socketio.on('user-disconnect')
+def user_disconnect(user):
+    try:
+        connected_viewers.pop(user)
+        print(f'User {user} disconnected')
+    except:
+        print(f'Disconnected user: {user} was never connected!')
 
 @socketio.on('message')
 def handle_message(msg):
@@ -56,18 +117,21 @@ def handle_message(msg):
 def handle_image_data(data):
     cam_ip = request.remote_addr
     try:
+        # Add the base64 encoded frame as the value for this cameras ip in the dictionary
+        cam_video[cam_ip] = data    
+        globals.cam_frames_recieved[cam_ip] += 1
         decoded_vid = base64.b64decode(data)
 
         timestamp = time.time()
 
         cam_dir = globals.cam_dirs.get(cam_ip)
 
-        print(cam_dir)
-
-        if cam_dir != None:
+        # Only archive if the cams dir exists and the frame number is odd to save space
+        if cam_dir != None and globals.cam_frames_recieved[cam_ip] % 2 == 0:
             with open(f"{cam_dir}/{timestamp}.jpg", "wb") as f:
                 f.write(decoded_vid)
 
+        # Writes to the access file for the cam
         cam_name = globals.cams.get(cam_ip)
         if cam_name != None:
             with open(f"{cam_name}.jpg", "wb") as f:
@@ -75,7 +139,6 @@ def handle_image_data(data):
 
     except Exception as e:
         print(f"Error handling image data: {e}")
-        
 
 def init():
     # Create configuration file if it doesn't exist 

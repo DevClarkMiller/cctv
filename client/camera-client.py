@@ -1,14 +1,13 @@
-import cv2, asyncio, base64
+import cv2, asyncio, base64, sys
 import socketio, logging, time, signal
 from config import *
 
 SLEEP_DURATION = 0.09
+config = {}
+running = True
 
 sio = socketio.AsyncClient()
-uri = 'http://localhost:5410'
-config = {}
 logger = logging.getLogger(__name__)
-running = True
 
 def signal_handler(signum, frame):
     global running
@@ -25,7 +24,6 @@ signal.signal(signal.SIGINT, signal_handler)
 async def connect():  # Function names match the event name
     if config.get("logging"): logging.info(f"Successfully connected to the server: {time.time()}")
     await sio.emit("connect-cam", "Connection")
-
 
 async def send_feed(buffer):
     try:
@@ -52,15 +50,22 @@ async def capture_and_send():
         await sio.disconnect()
         return
     
+    res = config.get('resolution')
+    print(f"RESOLUTION: {res}")
+    
     try:
         while(True):
             ret, frame = cap.read()
+
+            # Only resize if that config was provided
+            if res:
+                resize = cv2.resize(frame, res)
 
             if not ret:
                 print("Error: Could not read frame.")
                 break
 
-            _, buffer = cv2.imencode('.jpg', frame)
+            _, buffer = cv2.imencode('.jpg', resize)
 
             base64_img = base64.b64encode(buffer).decode('utf-8')
 
@@ -77,6 +82,9 @@ async def capture_and_send():
         cap.release()
         cv2.destroyAllWindows()
 
+def process_args():
+    pass
+
 # Try catch prevents ctrl + c in the cmd from throwing an exception, exits gracefully instead
 async def main():
     global config
@@ -90,7 +98,7 @@ async def main():
 
     # Connect to the Socket.IO server
     try:
-        await sio.connect(uri)  # Can throw a runtime error
+        await sio.connect(config.get("host"))  # Can throw a runtime error
     except:    
         msg = f"Couldn't connect to server at host: {config['host']}"
         print(msg)
