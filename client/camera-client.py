@@ -22,8 +22,10 @@ def signal_handler(signum, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 @sio.event
-def connect():  # Function names match the event name
+async def connect():  # Function names match the event name
     if config.get("logging"): logging.info(f"Successfully connected to the server: {time.time()}")
+    await sio.emit("connect-cam", "Connection")
+
 
 async def send_feed(buffer):
     try:
@@ -32,6 +34,9 @@ async def send_feed(buffer):
 
         await sio.sleep(SLEEP_DURATION)
     except:
+        global running
+        running = False
+        print("Host has ended stream")
         if config.get("logging"): logging.error("Error with sending feed to server")
 
 async def test_connection():

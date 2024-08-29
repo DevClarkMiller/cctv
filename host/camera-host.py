@@ -1,53 +1,52 @@
-import base64, logging, time, jsonpickle
-from flask import Flask, request
+import base64, logging, time, globals
+from flask import Flask, request, json
 from flask_socketio import SocketIO, emit
 from config import *
+from camMods import *
 
 PORT = 5410
-LOG_ERR = 0
-LOG_INFO = 1
 
 logger = logging.getLogger(__name__)
-config = {}
-cams = set()
-
 app = Flask(__name__)
 socketio = SocketIO(app, async_mode="eventlet")
 socketio.init_app(app)
 
-def log(msg, type=LOG_INFO):
-    if msg and config.get("logging"):
-        if type == LOG_INFO:
-            logging.info(msg)
-        else:
-            logging.error(msg)
-
-def load_cams_ips():
-    with open(config['cams_save_file']) as f:
-        return jsonpickle.decode(f.read())
-
-def save_cams_ips(cams):
-    cams_json = jsonpickle.encode(cams)
-    
-    with open(config['cams_save_file'], 'w') as f:
-        f.write(cams_json)
-
+@app.route('/runningStreams')
+def runningStreams():   # Returns a json with a list of streams that are available to the viewer
+    return json.jsonify(list(globals.connected_cams))   # Converts the set to a list, then to json and returns it
 
 @socketio.on('connect')
 def test_connect():
+    # Creates a directory for the day if it doesn't already exist
+    globals.create_daily_dir()
+
+# When a camera connects
+@socketio.on('connect-cam')
+def connect_cam(msg):
     cam_ip = request.remote_addr
-    if cam_ip not in cams:
-        cams.add(cam_ip)    # For distinguishing cameras
-        msg = f"New camera added - {cam_ip}: {time.time()}"
-        log(msg, type=LOG_INFO)
-        print(msg)
-        save_cams_ips(cams)
-    else:
-        print(f"Camera connected: {cam_ip}")
+    globals.connected_cams.add(cam_ip)
+
+    # Checks if the cameras ip hasn't been saved yet, if not, 
+    # update the save file and do some other things :)
+    if cam_ip not in globals.cams.keys(): init_new_cam(cam_ip)
+    else: print(f"Camera connected: {cam_ip}")
+
+    # Create a directory in the daily log if the cam doesn't already exist
+    cam_name = globals.cams.get(cam_ip)
+    if globals.daily_dir_path != None and cam_name != None:
+        full_dir = f"{globals.daily_dir_path}/{cam_name}"
+        print(full_dir)
+        globals.cam_dirs[cam_ip] = full_dir
+        if not os.path.exists(full_dir):
+            os.makedirs(full_dir)
 
 @socketio.on('disconnect')
 def test_disconnect():
-    print('Camera disconnected')
+    ip = request.remote_addr
+    if ip in globals.connected_cams:
+        globals.connected_cams.remove(ip)
+
+        print(f"Camera disconnected: {ip}")
 
 @socketio.on('message')
 def handle_message(msg):
@@ -55,32 +54,47 @@ def handle_message(msg):
 
 @socketio.on('image_data')
 def handle_image_data(data):
+    cam_ip = request.remote_addr
     try:
-        #print("Image recieved")
-        with open("image.png", "wb") as f:
-            f.write(base64.b64decode(data))
-    except:
-        print("Error handling image data")
+        decoded_vid = base64.b64decode(data)
+
+        timestamp = time.time()
+
+        cam_dir = globals.cam_dirs.get(cam_ip)
+
+        print(cam_dir)
+
+        if cam_dir != None:
+            with open(f"{cam_dir}/{timestamp}.jpg", "wb") as f:
+                f.write(decoded_vid)
+
+        cam_name = globals.cams.get(cam_ip)
+        if cam_name != None:
+            with open(f"{cam_name}.jpg", "wb") as f:
+                f.write(decoded_vid)
+
+    except Exception as e:
+        print(f"Error handling image data: {e}")
+        
 
 def init():
-    global config
-    global cams
-
     # Create configuration file if it doesn't exist 
     if not config_exists():
         create_config()
 
     # Init the config dict with the config file
-    config = read_config()
+    globals.config = read_config()
+
+    logging.basicConfig(filename=globals.config['log_location'], level=logging.INFO)
 
     # Load the saved cams ip
     try:
-        cams = load_cams_ips()
-        print(cams)
+        globals.cams = load_cams_ips()
+        msg = f"Loaded cams - {globals.cams}: {time.time()}"
+        print(msg)
+        globals.log(msg, type=globals.LOG_INFO)
     except Exception as ex:
         print("Error while openening cams save file, or it doesn't exist")
-    
-    logging.basicConfig(filename=config['log_location'], level=logging.INFO)
 
     socketio.run(app, host="0.0.0.0", port=PORT, debug=True)
 

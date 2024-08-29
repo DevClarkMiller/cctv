@@ -1,18 +1,20 @@
-import os.path
-import configparser
+import os.path, configparser
 
-CONFIG_NAME = 'config.ini'
+CONFIG_DIR = 'config'
+CONFIG_NAME = f'{CONFIG_DIR}/config.ini'
 
 def create_config():
     # Create config parser
     config = configparser.ConfigParser()
 
+    if not os.path.exists(CONFIG_DIR):
+        os.makedirs(CONFIG_DIR)
+
     # Add sections with a key-value pair
     config["Logging"] = {"logging": True, "log_location": "server.log"}
-    config["Cams"] = {"base_path": "feed_saved/", "save_file": "cams.json"}
+    config["Cams"] = {"base_path": "footage", "save_file": "config/cams.json"}
 
-
-    with open('config.ini', 'w') as configfile:
+    with open(CONFIG_NAME, 'w') as configfile:
         config.write(configfile)
 
 def read_config():
@@ -30,5 +32,4 @@ def read_config():
         'cams_save_file': config.get('Cams', 'save_file')
     }
 
-def config_exists():
-    return os.path.isfile(CONFIG_NAME)
+def config_exists(): return os.path.isfile(CONFIG_NAME)

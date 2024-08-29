@@ -1,18 +1,22 @@
 import os.path
 import configparser
 
-CONFIG_NAME = 'config.ini'
+CONFIG_DIR = 'config'
+CONFIG_NAME = f'{CONFIG_DIR}/config.ini'
 
 def create_config():
     # Create config parser
     config = configparser.ConfigParser()
+
+    if not os.path.exists(CONFIG_DIR):
+        os.makedirs(CONFIG_DIR)
 
     # Add sections with a key-value pair
     config["Logging"] = {"logging": True, "log_location": "client.log"}
     config["Camera"] = {"show_window": False}
     config["Server"] = {"host": 'http://localhost:5410'}
 
-    with open('config.ini', 'w') as configfile:
+    with open(CONFIG_NAME, 'w') as configfile:
         config.write(configfile)
 
 def read_config():
