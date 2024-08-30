@@ -30,39 +30,44 @@ def test_connect():
 @socketio.on('connect-viewer')
 def connect_viewer(user):
     if user is None:
+        print("No user provided")
         return emit('available-cameras', [])
     
     print(f'User joined as: {user}')
 
     connected_viewers[user] = []   # Inits the viewer with an empty array of ips
-    emit('available-cameras', json_cams_list())
+    cams = json_cams_list()
+    print(f'Available cams: {cams}')
+    emit('available-cameras', cams)
 
 @socketio.on('select-streams')
 def user_select_streams(req):
     user = req.get("user")
-    selected_streams = req.get("selected-streams")
+    selected_streams = req.get("selected_streams")
+
+    print(f"REQUEST DATA: {user, selected_streams}")
 
     if user is None or selected_streams is None:
-        emit('streams-set', 'No account provided or streams selected')
+        emit('streams-error', 'No account provided or streams selected')
 
     if selected_streams is not None:
         connected_viewers[user] = selected_streams
 
-    emit('streams-set', 'Streams now being sent to you!')
+    emit('streams-set', 'Streams now available to be recieved')
 
 @socketio.on('fetch-streams')
 def fetch_streams(user):
     selected_streams = connected_viewers.get(user)
 
     if selected_streams is None:
-        emit("streams-feed", {})    # Return empty dict since no streams are selected
+        emit("streams-error", 'No streams selected!')
 
-    stream_data = {}
+    stream_data = []
 
     for ip in selected_streams:
         cam_feed = cam_video[ip]
         if cam_feed != None:
-            stream_data[ip] = cam_feed
+            stream_data.append({ip: cam_feed})
 
     emit("streams-feed", stream_data)
 
@@ -70,6 +75,7 @@ def fetch_streams(user):
 @socketio.on('connect-cam')
 def connect_cam(msg):
     cam_ip = request.remote_addr
+    globals.cams_sid[request.sid] = cam_ip   # Maps this cams ip to this sockets sid
     globals.connected_cams.add(cam_ip)
 
     # Checks if the cameras ip hasn't been saved yet, if not, 
@@ -94,11 +100,14 @@ def connect_cam(msg):
 @socketio.on('disconnect')
 def test_disconnect():
     ip = request.remote_addr
+    sid = request.sid
 
     # Removes the ip from connected cams if that's where it's coming from
-    if ip in globals.connected_cams:
+    # if ip in globals.connected_cams:
+    if sid in globals.cams_sid.keys():
         globals.connected_cams.remove(ip)
         cam_video.pop(ip)
+        globals.cams_sid.pop(sid)
         print(f"Camera disconnected: {ip}")
         
 socketio.on('user-disconnect')

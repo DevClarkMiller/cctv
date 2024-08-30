@@ -7,6 +7,7 @@ global cams
 config = {} 
 connected_cams = set()
 mapped_ips_to_dir = {}
+cams_sid = {}
 cams = {}
 cam_dirs = {}
 cam_frames_recieved = {}
