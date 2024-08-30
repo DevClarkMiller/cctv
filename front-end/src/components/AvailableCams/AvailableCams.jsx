@@ -11,7 +11,7 @@ const AvailableCams = () => {
 
     return (
         <div className="availableCams bg-gray-900 text-white p-2 rounded-lg">
-            <h2 className="border-b border-white pb-1">Available Cameras</h2>
+            <h2 className="border-b border-white pb-1 font-semibold">Available Cameras</h2>
             <ul>
                 {availableCams?.map(cam => (
                     <SelectCam key={cam} cam={cam} />

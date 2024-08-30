@@ -13,7 +13,7 @@ const Content = () => {
     const { selectedCams, availableCams } = useContext(CamContext);
         
     return (
-        <div className="size-full flex flex-col items-start p-3">
+        <div className="size-full flex flex-col items-center lg:items-start p-3">
             <SelectServer />
 
             <span className="flex gap-2">

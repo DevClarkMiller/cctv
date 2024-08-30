@@ -11,8 +11,8 @@ const CameraGroup = () =>{
 
     return(
         <div className="cameraGroup w-full col-flex-center">
-            <h3 className="font-semibold text-3xl">Connected cameras</h3>
-            <span className="">
+            <h3 className="font-semibold text-3xl mb-3">Connected cameras</h3>
+            <span className="w-full flex flex-wrap justify-center">
                 {Array.isArray(streamData)&& streamData?.map((stream) =>(
                     <ConnectedCam key={stream} stream={stream}/>
                 ))}

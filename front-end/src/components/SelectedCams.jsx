@@ -8,7 +8,7 @@ const SelectedCams = () => {
 
     return (
         <div className="bg-gray-900 text-white p-2 rounded-lg">
-            <h2 className="border-b border-white pb-1">Selected Cameras</h2>
+            <h2 className="border-b border-white pb-1 font-semibold">Selected Cameras</h2>
             <ul>
                 {selectedCams?.map(cam => (
                     <div key={cam}>{cam}</div>

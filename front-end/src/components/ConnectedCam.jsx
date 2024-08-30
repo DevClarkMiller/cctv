@@ -20,7 +20,7 @@ const ConnectedCam = ({stream}) => {
  
 
     return (
-        <div>
+        <div className="w-fit">
             <img className="rounded-lg" src={imgSrc} alt="Camera feed"></img>
         </div>
     );

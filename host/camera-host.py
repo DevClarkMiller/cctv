@@ -65,7 +65,7 @@ def fetch_streams(user):
     stream_data = []
 
     for ip in selected_streams:
-        cam_feed = cam_video[ip]
+        cam_feed = cam_video.get(ip)
         if cam_feed != None:
             stream_data.append({ip: cam_feed})
 
