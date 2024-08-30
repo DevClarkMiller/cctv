@@ -4,16 +4,19 @@ import { useContext, useState } from "react";
 import { CamContext } from "../App";
 
 const SelectServer = () => {
-    const { serverUrl, setServerUrl, socket, setSocket, connectToServer } = useContext(CamContext);
+    const { serverUrl, setServerUrl, socket, connectToServer, disconnectFromServer } = useContext(CamContext);
+    
+    //State
+
 
     const onSubmitConnect = e =>{
         e.preventDefault();
-        // alert(`Now connecting to ${serverUrl}`);
         connectToServer();
     } 
 
     const onSubmitDisconnect = e =>{
         e.preventDefault();
+        disconnectFromServer();
     }
 
     return (
@@ -22,7 +25,8 @@ const SelectServer = () => {
                 <label htmlFor="first_name" className="label">Cam Server URL</label>
                 <input disabled={socket !== null} onChange={(e) => setServerUrl(e.target.value)} value={serverUrl} type="text" id="first_name" className="inputField" placeholder="http://localhost:3123" required />
             </span>
-            <button disabled={socket !== null} type="submit" className="btn">Connect to server</button>
+            <button type="submit" className="btn">{socket === null ? "Connect to server" : "disconnect from server"}</button>
+            
         </form>
     );
 }

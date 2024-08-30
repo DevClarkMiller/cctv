@@ -31,6 +31,14 @@ function App() {
     }
   }
 
+  const disconnectFromServer = () =>{
+    socket.disconnect();
+    setSocket(null);
+    setAvailableCams([]);
+    setSelectedCams([]);
+    setStreamData([]);
+  }
+
   const setCams = () =>{
     // alert("Now fetching cams 👆🤓");
 
@@ -73,13 +81,8 @@ function App() {
     }
   }, [socket]);
 
-  const sendMessage = () =>{
-    if (!socket) return;
-    socket.emit('message', 'Hello server!');
-  }
-
   return (
-    <CamContext.Provider value={{user, setUser, serverUrl, setServerUrl, socket, setSocket, connectToServer, availableCams, selectedCams, setSelectedCams, streamData, setStreamData, setCams}}>
+    <CamContext.Provider value={{user, setUser, serverUrl, setServerUrl, socket, setSocket, connectToServer, availableCams, selectedCams, setSelectedCams, streamData, setStreamData, setCams, disconnectFromServer}}>
       <div className="App">
         <Header />
         <Content />

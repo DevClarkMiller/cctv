@@ -7,6 +7,7 @@ from camMods import *
 PORT = 5410
 cam_video = {}  # Dictionary of the base64 frame from each active camera
 connected_viewers = {}  # Contains the ips of the cameras the viewer wants to see
+viewer_sids = {}    # Contains the sid for each viewer who connects
 
 logger = logging.getLogger(__name__)
 app = Flask(__name__)
@@ -34,6 +35,7 @@ def connect_viewer(user):
         return emit('available-cameras', [])
     
     print(f'User joined as: {user}')
+    viewer_sids[request.sid] = user
 
     connected_viewers[user] = []   # Inits the viewer with an empty array of ips
     cams = json_cams_list()
@@ -71,6 +73,9 @@ def fetch_streams(user):
 
     emit("streams-feed", stream_data)
 
+# TODO - ALLOW USERS TO POP CAMS FROM THEIR SELECTED LIST
+# @socketio.on()
+
 # When a camera connects
 @socketio.on('connect-cam')
 def connect_cam(msg):
@@ -103,20 +108,18 @@ def test_disconnect():
     sid = request.sid
 
     # Removes the ip from connected cams if that's where it's coming from
-    # if ip in globals.connected_cams:
     if sid in globals.cams_sid.keys():
         globals.connected_cams.remove(ip)
         cam_video.pop(ip)
         globals.cams_sid.pop(sid)
         print(f"Camera disconnected: {ip}")
-        
-socketio.on('user-disconnect')
-def user_disconnect(user):
-    try:
-        connected_viewers.pop(user)
-        print(f'User {user} disconnected')
-    except:
-        print(f'Disconnected user: {user} was never connected!')
+    elif sid in viewer_sids.keys():
+        user = viewer_sids.get(sid)
+        try:
+            connected_viewers.pop(user)
+            print(f'User {user} disconnected')
+        except:
+            print(f'Disconnected user: {user} was never connected!')
 
 @socketio.on('message')
 def handle_message(msg):
