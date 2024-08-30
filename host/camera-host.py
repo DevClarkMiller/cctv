@@ -1,6 +1,9 @@
-import base64, logging, time, globals, json
-from flask import Flask, request
+import base64, logging, time, globals, json, os, io
+from datetime import datetime
+from moviepy.editor import ImageSequenceClip
+from flask import Flask, request, jsonify
 from flask_socketio import SocketIO, emit
+import tempfile
 from config import *
 from camMods import *
 
@@ -18,9 +21,92 @@ socketio.init_app(app)
 def json_cams_list():
     return list(globals.connected_cams)
 
-@app.route('/runningStreams')
-def runningStreams():   # Returns a json with a list of streams that are available to the viewer
-    return json_cams_list()
+def parse_range(dir, start_stamp, end_stamp):
+    frames = []
+    try:
+        for filename in os.listdir(dir):
+            f = os.path.join(dir, filename)
+
+            if os.path.isfile(f):
+                name, _ = os.path.splitext(os.path.basename(f)) # Gets the time stamp of the frame
+                file_stamp = int(float(name))
+
+                stamp_in_range = file_stamp >= start_stamp and file_stamp <= end_stamp
+
+                if stamp_in_range:
+                    frames.append(f)
+
+    except PermissionError as e:
+        print(f"PERMISSION ERROR: {e}")
+    except RecursionError as e:
+        print(f"RECURSION ERROR: {e}")
+    except Exception as e:
+        print(f"EXCEPTION: {e}")
+
+    finally:
+        return frames
+
+def get_range_imgs(ip, start, end):
+    start_day = datetime.fromtimestamp(int(start)).strftime('%Y_%m_%d') 
+    end_day = datetime.fromtimestamp(int(end)).strftime('%Y_%m_%d') 
+
+    dir_ip = globals.ip_to_dir(ip)
+
+    start_day_dir = f"{globals.config.get('cam_base_path')}/{start_day}/{dir_ip}"
+    end_day_dir = f"{globals.config.get('cam_base_path')}/{end_day}/{dir_ip}"
+    same_day = start_day_dir == end_day_dir
+
+    if not os.path.exists(start_day_dir) or not os.path.exists(end_day_dir):
+        return None
+    
+    frame_paths = []
+
+    start = int(start)
+    end = int(end)
+
+    # Merge the lists if image data was found, this is in order
+    if same_day:
+        frame_paths += parse_range(start_day_dir, start, end)
+    else:
+        frame_paths += parse_range(start_day_dir, start, end)
+        frame_paths += parse_range(end_day_dir, start, end)
+
+    # print(frame_paths)
+    print(f"NUM FRAMES FOUND: {len(frame_paths)}")
+
+    # Create video clip from the image sequence
+    clip = ImageSequenceClip(frame_paths, fps=24)
+
+    # Create a temporary file to store the video
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_file:
+        # Write video to temporary file
+        temp_file_path = temp_file.name
+        clip.write_videofile(temp_file_path, codec="libx264", audio=False)
+
+    # Read the video file and convert to base64
+    with open(temp_file_path, 'rb') as video_file:
+        video_base64 = base64.b64encode(video_file.read()).decode('utf-8')
+
+    return video_base64
+
+
+# Returns a file for each of the requested cams for the requested times
+@app.route('/createFootageVid', methods=['POST'])
+def get_footage():
+    cam_ips = request.get_json()
+
+    vids = []
+
+    for ip_dict in cam_ips:
+        ip = list(ip_dict.keys())[0]
+        vals = ip_dict[ip]
+        start = vals["start"]
+        end = vals["end"]
+
+        base64Vid = get_range_imgs(ip, start, end)
+        vids.append(base64Vid)
+
+    return jsonify(vids)
 
 @socketio.on('connect')
 def test_connect():
@@ -46,8 +132,6 @@ def connect_viewer(user):
 def user_select_streams(req):
     user = req.get("user")
     selected_streams = req.get("selected_streams")
-
-    print(f"REQUEST DATA: {user, selected_streams}")
 
     if user is None or selected_streams is None:
         emit('streams-error', 'No account provided or streams selected')

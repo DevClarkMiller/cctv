@@ -39,13 +39,15 @@ function App() {
     setStreamData([]);
   }
 
-  const setCams = () =>{
+  const setCams = (updatedCams) =>{
     // alert("Now fetching cams 👆🤓");
 
     const data = {
       user: user,
       selected_streams: selectedCams
     }
+
+    console.log(data);
 
     socket.emit('select-streams', data);
   }
@@ -68,16 +70,16 @@ function App() {
     console.error(msg);
   }
 
-  const onStreamsSet = msg => {
-    socket.emit('streams-feed', user);
-  }
+  // const onStreamsSet = msg => {
+  //   socket.emit('streams-feed', user);
+  // }
 
   useEffect(() =>{
     if (socket){
       socket.on('available-cameras', onAvailableCams);
       socket.on('streams-feed', onStreamsFeed);
       socket.on('streams-error', onStreamsError);
-      socket.on('streams-set', onStreamsFeed);
+      socket.on('streams-set', onStreamsFeed);  // Streams set just calls streams feed anyways
     }
   }, [socket]);
 
