@@ -111,9 +111,13 @@ def get_footage():
         print(start, end)
 
         base64Vid = get_range_imgs(ip, start, end)
-        vids.append(base64Vid)
-
-    return jsonify(vids)
+        if base64Vid != None:
+            vids.append(base64Vid)
+    
+    if len(vids) > 0:
+        return jsonify(vids)
+    else:
+        return "Issue with getting footage", 400
 
 # Return the ips that have connected to the host server before
 @app.route('/getFootageIps')

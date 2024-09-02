@@ -24,7 +24,7 @@ const CamsListDeletable = ({addFootage}) =>{
     return(
         <ul>
             {Object.keys(addFootage)?.map((ip) =>(
-                <li className='nice-trans hover:cursor-pointer text-green-500 hover:text-blue-600' key={ip}><Link to={`setCam/${ip}`}>{ip}</Link></li>
+                <li className='nice-trans hover:cursor-pointer text-green-500' key={ip}>{ip}</li>
             ))}
         </ul>
     );
@@ -38,6 +38,7 @@ const DownloadFootagePage = () => {
 
     //State
     const [camIps, setCamIps] = useState(null);
+    const [downloadedFootage, setDownloadedFootage] = useState(null);
 
     // Reducers
     const [addFootage, dispatchAddFootage] = useReducer(footageReducer, INITIAL_STATE);
@@ -54,17 +55,6 @@ const DownloadFootagePage = () => {
     }
 
     useEffect(() => console.log(addFootage), [addFootage]);
-
-    const getVideo = async () =>{
-        // Data is an array of ips with the specified time stamps
-        const data = []
-        
-        try{
-            const footage = axios.post();
-        }catch(err){
-            console.error(err);
-        }
-    }
 
     const getArchivedCams = async () => {
         try{
@@ -86,13 +76,48 @@ const DownloadFootagePage = () => {
         e.preventDefault();
 
         try{
-            const footage = await axios.post(`${serverUrl}/createFootageVid`, addFootage, { headers: {
+            const response = await axios.post(`${serverUrl}/createFootageVid`, addFootage, { headers: {
                 'Content-Type': 'application/json'
             }});
+            
+            const data = response?.data;
+            if (data)
+                setDownloadedFootage(data);
         }catch(err){
             console.error(err);
         }
     }
+    
+    const base64ToBlob = (base64, mime) => {
+        const byteCharacters = atob(base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        return new Blob([byteArray], { type: mime });
+    };
+    
+    // Handle download
+    const handleDownload = (base64String, fileName) => {
+        const blob = base64ToBlob(base64String, 'application/octet-stream'); // Adjust MIME type as needed
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url); // Clean up the URL object
+    };
+
+    useEffect(() =>{
+        if (downloadedFootage){
+            downloadedFootage.forEach((footage) =>{
+                handleDownload(footage, "Footage.mp4");
+            });
+        }
+    }, [downloadedFootage]);
     
     return (
         <form className="size-full flex-grow col-flex-center justify-center gap-1" onSubmit={onSubmit}>
