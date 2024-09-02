@@ -1,13 +1,14 @@
 import { useContext, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 //Context
 import { CamContext } from "../App";
 
 const SelectServer = () => {
+    const navigate = useNavigate();
+
     const { serverUrl, setServerUrl, socket, connectToServer, disconnectFromServer } = useContext(CamContext);
     
-    //State
-
 
     const onSubmitConnect = e =>{
         e.preventDefault();
@@ -25,7 +26,7 @@ const SelectServer = () => {
                 <label htmlFor="first_name" className="label">Cam Server URL</label>
                 <input disabled={socket !== null} onChange={(e) => setServerUrl(e.target.value)} value={serverUrl} type="text" id="first_name" className="inputField" placeholder="http://localhost:3123" required />
             </span>
-            <button type="submit" className="btn">{socket === null ? "Connect to server" : "disconnect from server"}</button>
+            <button type="submit" className="btn">Connect To Server</button>
             
         </form>
     );

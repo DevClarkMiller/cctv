@@ -2,6 +2,7 @@ import base64, logging, time, globals, json, os, io
 from datetime import datetime
 from moviepy.editor import ImageSequenceClip
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from flask_socketio import SocketIO, emit
 import tempfile
 from config import *
@@ -14,6 +15,12 @@ viewer_sids = {}    # Contains the sid for each viewer who connects
 
 logger = logging.getLogger(__name__)
 app = Flask(__name__)
+CORS(app)
+cors = CORS(app, resource={
+    r"/*":{
+        "origins":"*"
+    }
+})
 socketio = SocketIO(app, async_mode="eventlet", cors_allowed_origins="*")
 socketio.init_app(app)
 
@@ -89,7 +96,6 @@ def get_range_imgs(ip, start, end):
 
     return video_base64
 
-
 # Returns a file for each of the requested cams for the requested times
 @app.route('/createFootageVid', methods=['POST'])
 def get_footage():
@@ -97,21 +103,27 @@ def get_footage():
 
     vids = []
 
-    for ip_dict in cam_ips:
-        ip = list(ip_dict.keys())[0]
-        vals = ip_dict[ip]
+    for ip in cam_ips:
+        vals = cam_ips[ip]
         start = vals["start"]
         end = vals["end"]
+
+        print(start, end)
 
         base64Vid = get_range_imgs(ip, start, end)
         vids.append(base64Vid)
 
     return jsonify(vids)
 
-@socketio.on('connect')
-def test_connect():
-    # Creates a directory for the day if it doesn't already exist
-    globals.create_daily_dir()
+# Return the ips that have connected to the host server before
+@app.route('/getFootageIps')
+def get_footage_ips():
+    return jsonify(list(globals.cams.keys()))
+
+# @socketio.on('connect')
+# def test_connect():
+#     # Creates a directory for the day if it doesn't already exist
+    
 
 # TODO - TAKE IN USER ACCOUNT AND ONLY RETURN WHATEVER CAMERAS THEY HAVE ACCESS TO
 @socketio.on('connect-viewer')
@@ -163,6 +175,7 @@ def fetch_streams(user):
 # When a camera connects
 @socketio.on('connect-cam')
 def connect_cam(msg):
+    globals.create_daily_dir()
     cam_ip = request.remote_addr
     globals.cams_sid[request.sid] = cam_ip   # Maps this cams ip to this sockets sid
     globals.connected_cams.add(cam_ip)

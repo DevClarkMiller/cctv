@@ -1,25 +1,32 @@
 import { useRef, useEffect, useState, createContext } from "react";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import io from 'socket.io-client';
 
 //Components
 import Content from "./components/Content";
-import CameraGroup from './components/CameraGroup'
 import Header from './components/Header';
-import SelectServer from "./components/SelectServer";
+import LandingPage from "./components/LandingPage";
 
 //Context
 export const CamContext = createContext();
 
 function App() {
+  const navigate = useNavigate();
+
   const [user, setUser] = useState('clark');
   const [socket, setSocket] = useState(null);
+  const [socketLoading, setSocketLoading] = useState(false);
   const [serverUrl, setServerUrl] = useState("http://localhost:5410");
   const [availableCams, setAvailableCams] = useState([]);
   const [selectedCams, setSelectedCams] = useState([]);
   const [streamData, setStreamData] = useState(null);
 
+  //Reducers
+
+  
+
   const connectToServer = (url) =>{
-    console.log(`Now trying to connect to ${serverUrl}`);
+    setSocketLoading(true);
 
     if (serverUrl){
       let sock = io.connect(serverUrl);
@@ -37,6 +44,7 @@ function App() {
     setAvailableCams([]);
     setSelectedCams([]);
     setStreamData([]);
+    navigate('/');
   }
 
   const setCams = (updatedCams) =>{
@@ -70,25 +78,37 @@ function App() {
     console.error(msg);
   }
 
-  // const onStreamsSet = msg => {
-  //   socket.emit('streams-feed', user);
-  // }
+  const onConnect = () => {
+    setSocketLoading(false);
+    navigate('/main');
+  }
+
+  const onSocketLoadFail = () =>{
+    setSocketLoading(false);
+  }
 
   useEffect(() =>{
     if (socket){
+      socket.on('connect', onConnect);
       socket.on('available-cameras', onAvailableCams);
       socket.on('streams-feed', onStreamsFeed);
       socket.on('streams-error', onStreamsError);
       socket.on('streams-set', onStreamsFeed);  // Streams set just calls streams feed anyways
+      socket.on('connect_error', onSocketLoadFail);
+      socket.on('connect_timeout', onSocketLoadFail);
     }
   }, [socket]);
 
   return (
     <CamContext.Provider value={{user, setUser, serverUrl, setServerUrl, socket, setSocket, connectToServer, availableCams, selectedCams, setSelectedCams, streamData, setStreamData, setCams, disconnectFromServer}}>
-      <div className="App">
-        <Header />
-        <Content />
-      </div>
+      <Routes>
+        <Route path="/*" element={
+          <div className="App size-full min-h-screen flex-grow bg-[#282828]">
+            <Header />
+            <Content />
+          </div>
+        }/> 
+      </Routes>
     </CamContext.Provider>
   );
 }
